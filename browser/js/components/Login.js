@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { browserHistory } from 'react-router';
+import { loginUser } from '../redux/login';
 
 /* -----------------    COMPONENT     ------------------ */
 
@@ -26,13 +27,13 @@ class Login extends React.Component {
               />
             </div>
             <div className="form-group">
-                <label>password</label>
-                <input
-                  name="password"
-                  type="password"
-                  className="form-control"
-                  required
-                />
+              <label>password</label>
+              <input
+                name="password"
+                type="password"
+                className="form-control"
+                required
+              />
             </div>
             <button type="submit" className="btn btn-block btn-primary">{message}</button>
           </form>
@@ -58,15 +59,24 @@ class Login extends React.Component {
   }
 
   onLoginSubmit(event) {
+    console.log(event.target.email.value);
     const { message } = this.props;
+    const {login} = this.props;
+    const credentials = {email: event.target.email.value, password: event.target.password.value}
+    login(credentials); 
     event.preventDefault();
-    console.log(`${message} isn't implemented yet`);
   }
 }
 
 /* -----------------    CONTAINER     ------------------ */
 
 const mapState = () => ({ message: 'Log in' });
-const mapDispatch = null;
+const mapDispatch = (dispatch) => {
+  return {
+    login: function (user) {
+      dispatch(loginUser(user));
+    }
+  }
+};
 
 export default connect(mapState, mapDispatch)(Login);

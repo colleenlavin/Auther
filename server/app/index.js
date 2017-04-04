@@ -3,6 +3,7 @@
 var app = require('express')();
 var path = require('path');
 var session = require('express-session');
+var User = require('../api/users/user.model');
 
 
 // "Enhancing" middleware (does not send response, server-side effects only)
@@ -25,6 +26,22 @@ app.use(function (req, res, next) {
   next();
 });
 
+
+app.post('/login', function (req, res, next) {
+  User.findOne({
+    where: req.body
+  })
+  .then(function (user) {
+    if (!user) {
+      res.sendStatus(401);
+    } else {
+      req.session.userId = user.id;
+      res.status(200).json(user);
+      console.log(user)
+    }
+  })
+  .catch(next);
+});
 // app.use('/api', function (req, res, next) {
 //   if (!req.session.counter) req.session.counter = 0;
 //   console.log('counter', ++req.session.counter);
@@ -42,6 +59,8 @@ validFrontendRoutes.forEach(function (stateRoute) {
     res.sendFile(indexPath);
   });
 });
+
+
 
 app.use(require('./statics.middleware'));
 
