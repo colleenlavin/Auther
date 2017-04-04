@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { browserHistory } from 'react-router';
+import { addUser } from '../redux/users';
 
 /* -----------------    COMPONENT     ------------------ */
 
@@ -59,15 +60,22 @@ class Signup extends React.Component {
   }
 
   onSignupSubmit(event) {
-    const { message } = this.props;
-    event.preventDefault();
-    console.log(`${message} isn't implemented yet`);
+    console.log(event.target.email.value);
+    const { signUp} = this.props;
+    const credentials = {email: event.target.email.value, password: event.target.password.value}
+    signUp(credentials); 
+    event.preventDefault(); 
   }
 }
 
 /* -----------------    CONTAINER     ------------------ */
 
 const mapState = () => ({ message: 'Sign up' });
-const mapDispatch = null;
-
+const mapDispatch = (dispatch) => {
+  return {
+    signUp: function (user) {
+      dispatch(addUser(user));
+    }
+  }
+};
 export default connect(mapState, mapDispatch)(Signup);

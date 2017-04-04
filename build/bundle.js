@@ -24249,7 +24249,7 @@
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	exports.default = (0, _redux.combineReducers)({ users: _users2.default, stories: _stories2.default, login: _login2.default });
+	exports.default = (0, _redux.combineReducers)({ users: _users2.default, stories: _stories2.default, currentUser: _login2.default });
 
 /***/ },
 /* 218 */
@@ -25990,7 +25990,7 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.loginUser = undefined;
+	exports.logoutUser = exports.loginUser = undefined;
 	exports.default = reducer;
 	
 	var _axios = __webpack_require__(219);
@@ -26000,24 +26000,58 @@
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	var LOGIN = 'LOGIN_USER';
+	var LOGOUT = 'LOGOUT_USER';
 	
+	//ACTIONS
+	
+	//Login action: sets the current user to the user that's logged in. 
 	var login = function login(currentUser) {
 	  return { type: LOGIN, currentUser: currentUser };
 	};
 	
+	//Logout actions: sets the current user to an empty object. (There is not current user if no one is logged in.)
+	var logout = function logout() {
+	  return { type: LOGOUT, currentUser: {} };
+	};
+	
+	//REDUCER: This is exported to combine reducers, which takes the state and reducers
+	//as defined on many reducers and combines them into the store. 
+	
+	//This reducer takes the actions above to create the new current user state. 
+	//The actions are login/logout as defined above.  
+	//The default current user is an empty object because by default, no one is logged in. 
 	function reducer() {
 	  var currentUser = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	  var action = arguments[1];
 	
 	  switch (action.type) {
-	
+	    //If Login is dispatched to this reducer set the current user to the current user. 
 	    case LOGIN:
+	      return action.currentUser;
+	
+	    //If logout is dispatched, set current user to an empty object. 
+	    //There's no current user if the person is logged out. 
+	    case LOGOUT:
 	      return action.currentUser;
 	
 	    default:
 	      return currentUser;
 	  }
 	}
+	
+	//The reducer above is activated by the views (our components/containers). 
+	//Of course, these functions are importanted into these components. 
+	
+	//For example, in the Navbar component, when we click logout, it calls a function 
+	//(in mapDispatch) that dispatches logoutUser below. logoutUser makes a request
+	//to the route defined in our app.js, which destroys the user session. 
+	//then it dispatches to logout above, which changes the state. 
+	
+	//Login user is activated by the login component. When you click the submit
+	//button, it calls a functions that again dispatches to the function below. 
+	//Which makes a request to the /login route, which authenticates the user
+	//and logs them in. Then it dispatches to the reducer above which changes
+	//the state to have a logged in user. 
 	
 	var loginUser = exports.loginUser = function loginUser(user) {
 	  return function (dispatch) {
@@ -26026,6 +26060,16 @@
 	      return dispatch(login(res.data));
 	    }).catch(function (err) {
 	      return console.error('Creating user: ' + user + ' unsuccesful', err);
+	    });
+	  };
+	};
+	
+	var logoutUser = exports.logoutUser = function logoutUser() {
+	  return function (dispatch) {
+	    _axios2.default.get('/logout').then(function (res) {
+	      return dispatch(logout());
+	    }).catch(function (err) {
+	      return console.error('Logging out unsuccesful', err);
 	    });
 	  };
 	};
@@ -31724,6 +31768,8 @@
 	
 	var _reactRouter = __webpack_require__(247);
 	
+	var _login = __webpack_require__(245);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -31801,8 +31847,8 @@
 	                )
 	              )
 	            ),
-	            this.renderLogout(),
-	            this.renderLoginSignup()
+	            Object.keys(this.props.currentUser).length ? this.renderLogout() : this.renderLoginSignup(),
+	            console.log("THIS PROPS CURRUSER", this.props.currentUser, "USERS", this.props.users)
 	          )
 	        )
 	      );
@@ -31859,18 +31905,29 @@
 	
 	/* -----------------    CONTAINER     ------------------ */
 	
-	var mapProps = null;
+	//const mapProps = null;
+	// const mapProps = () => (
+	//   { message: 'Log Out' }
+	//   );
+	
+	var mapState = function mapState(_ref) {
+	  var users = _ref.users,
+	      currentUser = _ref.currentUser;
+	  return { users: users, currentUser: currentUser };
+	};
 	
 	var mapDispatch = function mapDispatch(dispatch) {
 	  return {
 	    logout: function logout() {
 	      console.log('You signed out. Sorta.');
-	      _reactRouter.browserHistory.push('/');
+	      //console.log("LOGOUT", this.props.currentUser)
+	      _reactRouter.browserHistory.push('/login');
+	      dispatch((0, _login.logoutUser)());
 	    }
 	  };
 	};
 	
-	exports.default = (0, _reactRedux.connect)(mapProps, mapDispatch)(Navbar);
+	exports.default = (0, _reactRedux.connect)(mapState, mapDispatch)(Navbar);
 
 /***/ },
 /* 310 */
@@ -32230,6 +32287,8 @@
 	
 	var _reactRouter = __webpack_require__(247);
 	
+	var _users = __webpack_require__(218);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -32343,10 +32402,12 @@
 	  }, {
 	    key: 'onSignupSubmit',
 	    value: function onSignupSubmit(event) {
-	      var message = this.props.message;
+	      console.log(event.target.email.value);
+	      var signUp = this.props.signUp;
 	
+	      var credentials = { email: event.target.email.value, password: event.target.password.value };
+	      signUp(credentials);
 	      event.preventDefault();
-	      console.log(message + ' isn\'t implemented yet');
 	    }
 	  }]);
 	
@@ -32358,8 +32419,13 @@
 	var mapState = function mapState() {
 	  return { message: 'Sign up' };
 	};
-	var mapDispatch = null;
-	
+	var mapDispatch = function mapDispatch(dispatch) {
+	  return {
+	    signUp: function signUp(user) {
+	      dispatch((0, _users.addUser)(user));
+	    }
+	  };
+	};
 	exports.default = (0, _reactRedux.connect)(mapState, mapDispatch)(Signup);
 
 /***/ },
