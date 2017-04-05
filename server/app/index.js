@@ -31,17 +31,26 @@ app.post('/login', function (req, res, next) {
   User.findOne({
     where: req.body
   })
-  .then(function (user) {
-    if (!user) {
-      res.sendStatus(401);
-    } else {
-      req.session.userId = user.id;
-      res.status(200).json(user);
-      console.log(user)
-    }
-  })
-  .catch(next);
+    .then(function (user) {
+      if (!user) {
+        res.sendStatus(401);
+      } else {
+        req.session.userId = user.id;
+        res.status(200).json(user);
+        console.log(user)
+        console.log('logged in: ', req.session)
+      }
+    })
+    .catch(next);
 });
+
+app.get('/logout', function (req, res, next) {
+  req.session.destroy()
+    console.log("logged out: ", req.session)
+
+  res.status(204).send("hello")
+})
+
 // app.use('/api', function (req, res, next) {
 //   if (!req.session.counter) req.session.counter = 0;
 //   console.log('counter', ++req.session.counter);

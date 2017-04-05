@@ -49,6 +49,7 @@ router.put('/:id', function (req, res, next) {
   .catch(next);
 });
 
+
 router.delete('/:id', function (req, res, next) {
   req.requestedUser.destroy()
   .then(function () {
